@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+    "bufio"
 )
 
 const (
@@ -27,30 +28,24 @@ func main() {
 		os.Exit(1)
 	}
 
-    stringRead, err := ReadFromConn(conn)
-    if err != nil {
-        fmt.Println("Error while reading the data", err)
-        os.Exit(1)
-    }
-    fmt.Println("Read:", *stringRead)
+    reader := bufio.NewReader(conn)
 
-    reply := ConvertToRESPSimpleString(PONG)
-    err = WriteToConn(conn, reply)
-    if err != nil {
-        fmt.Println("Error while writing the data", err)
-        os.Exit(1)
-    }
-}
+    for {
+        stringRead, err := reader.ReadString('\n')
 
-func ReadFromConn(conn net.Conn) (*string, error) {
-    var bytesRead []byte
-    n, err := conn.Read(bytesRead)
-    if err != nil {
-        return nil, err
+        if err != nil {
+            print("Error while reading", err)
+            os.Exit(1)
+        }
+        
+        fmt.Println(stringRead)
+        reply := ConvertToRESPSimpleString(PONG)
+        err = WriteToConn(conn, reply)
+        if err != nil {
+            fmt.Println("Error while writing the data", err)
+            os.Exit(1)
+        }
     }
-    fmt.Printf("Read %d bytes", n)
-    stringRead := string(bytesRead)
-    return &stringRead, nil
 }
 
 func WriteToConn(conn net.Conn, message string) error {
@@ -58,7 +53,7 @@ func WriteToConn(conn net.Conn, message string) error {
     if err != nil {
         return err
     }
-    fmt.Printf("Wrote %d bytes", n)
+    fmt.Printf("Wrote %d bytes\n", n)
     return nil
 }
 

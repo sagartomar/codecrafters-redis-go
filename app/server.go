@@ -26,21 +26,40 @@ func main() {
 		fmt.Println("Error accepting connection: ", err.Error())
 		os.Exit(1)
 	}
-    var bytesRead []byte
-    _, err = conn.Read(bytesRead)
+
+    stringRead, err := ReadFromConn(conn)
     if err != nil {
         fmt.Println("Error while reading the data", err)
         os.Exit(1)
     }
-    stringRead := string(bytesRead)
-    fmt.Println("Read:", stringRead)
+    fmt.Println("Read:", *stringRead)
+
     reply := ConvertToRESPSimpleString(PONG)
-    n, err := conn.Write([]byte(reply))
+    err = WriteToConn(conn, reply)
     if err != nil {
-        fmt.Println("Error while writinh the data", err)
+        fmt.Println("Error while writing the data", err)
         os.Exit(1)
     }
+}
+
+func ReadFromConn(conn net.Conn) (*string, error) {
+    var bytesRead []byte
+    n, err := conn.Read(bytesRead)
+    if err != nil {
+        return nil, err
+    }
+    fmt.Printf("Read %d bytes", n)
+    stringRead := string(bytesRead)
+    return &stringRead, nil
+}
+
+func WriteToConn(conn net.Conn, message string) error {
+    n, err := conn.Write([]byte(message))
+    if err != nil {
+        return err
+    }
     fmt.Printf("Wrote %d bytes", n)
+    return nil
 }
 
 func ConvertToRESPSimpleString(message string) string {

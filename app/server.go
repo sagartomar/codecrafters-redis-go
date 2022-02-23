@@ -39,13 +39,15 @@ func HandleConnection(conn net.Conn) {
     defer conn.Close()
 
     for {
-        stringRead, err := reader.ReadString('\n')
+        stringRead, err := reader.ReadString('\r')
 
         if err != nil {
             fmt.Println("Error while reading", err.Error())
             break
         }
         
+        fmt.Println(stringRead[0] == '\n', stringRead[len(stringRead) - 1] == '\r')
+        fmt.Println("String length:", len(stringRead))
         fmt.Println(stringRead)
         reply := ConvertToRESPSimpleString(PONG)
         err = WriteToConn(conn, reply)

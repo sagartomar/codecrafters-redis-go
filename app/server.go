@@ -22,28 +22,36 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
     }
-    conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
-	}
 
+    for {
+        conn, err := l.Accept()
+        if err != nil {
+            fmt.Println("Error accepting connection: ", err.Error())
+            os.Exit(1)
+        }   
+
+        go HandleConnection(conn)
+    }
+}
+
+func HandleConnection(conn net.Conn) {
     reader := bufio.NewReader(conn)
+    defer conn.Close()
 
     for {
         stringRead, err := reader.ReadString('\n')
 
         if err != nil {
-            print("Error while reading", err)
-            os.Exit(1)
+            fmt.Println("Error while reading", err.Error())
+            break
         }
         
         fmt.Println(stringRead)
         reply := ConvertToRESPSimpleString(PONG)
         err = WriteToConn(conn, reply)
         if err != nil {
-            fmt.Println("Error while writing the data", err)
-            os.Exit(1)
+            fmt.Println("Error while writing the data", err.Error())
+            break
         }
     }
 }

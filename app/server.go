@@ -65,7 +65,7 @@ func ProcessInput(reader *bufio.Reader) ([]string, error) {
     input = RemoveLF(input)
     if input[0] != '*' {
         fmt.Println("Invalid character:", input[0])
-        return nil, nil
+        return []string {"PING"}, nil
     }
     arrayLen, err := strconv.Atoi(input[1 : ])
     if err != nil {

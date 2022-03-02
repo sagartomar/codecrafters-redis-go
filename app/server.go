@@ -40,48 +40,48 @@ func HandleConnection(conn net.Conn) {
     defer conn.Close()
 
     for {
-        input := ProcessInput(reader)
+        input, err := ProcessInput(reader)
+        if err != nil {
+            break
+        }
         if input != nil {
             for _, in := range input {
                 fmt.Println(in)
             }
         }
-        ExecuteCommand(input, conn)
-        reply := ConvertToRESPSimpleString(PONG)
-        err := WriteToConn(conn, reply)
-        if err != nil {
-            fmt.Println("Error while writing the data", err.Error())
-            break
+        if input != nil {
+            ExecuteCommand(input, conn)
         }
     }
 }
 
-func ProcessInput(reader *bufio.Reader) []string{
+func ProcessInput(reader *bufio.Reader) ([]string, error) {
     input, err := reader.ReadString('\r')
     if err != nil {
         fmt.Println("Error while reading data:", err.Error())
-        return nil
+        return nil, err
     }
     input = RemoveCR(input)
     input = RemoveLF(input)
     if input[0] != '*' {
         fmt.Println("Invalid character:", input[0])
-        return nil
+        return nil, nil
     }
     arrayLen, err := strconv.Atoi(input[1 : ])
     if err != nil {
         fmt.Println("Error while converting array length to int", err.Error())
+        return nil, nil
     }
     arr := make([]string, arrayLen)
     for i := 0; i < arrayLen; i++ {
         data := ProcessElement(reader)
         if data == nil {
             fmt.Println("Error in reading element")
-            return nil
+            return nil, nil
         }
         arr[i] = *data
     }
-    return arr
+    return arr, nil
 }
 
 func ProcessElement(reader *bufio.Reader) *string {
@@ -133,7 +133,7 @@ func Echo(conn net.Conn, arguments []string) {
         fmt.Printf("ECHO expects 1 argument but received %d\n", len(arguments))
         return
     }
-    err := WriteToConn(conn, arguments[0])
+    err := WriteToConn(conn, ConvertToRESPBulkString(arguments[0]))
     if err != nil {
         fmt.Println("Error while sending the message:", err.Error())
     }
@@ -164,4 +164,8 @@ func WriteToConn(conn net.Conn, message string) error {
 
 func ConvertToRESPSimpleString(message string) string {
     return PLUS + message + CRLF
+}
+
+func ConvertToRESPBulkString(message string) string {
+    return fmt.Sprintf("$%d\r\n%s\r\n", len(message), message)
 }

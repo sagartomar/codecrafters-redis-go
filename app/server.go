@@ -119,13 +119,17 @@ func ProcessElement(reader *bufio.Reader) *string {
 func ExecuteCommand(input []string, conn net.Conn) {
     switch(input[0]) {
     case "PING":
-        return
+        Ping(conn)
     case "ECHO":
         Echo(conn, input[1 :])
     }
 }
 
 func Ping(conn net.Conn) {
+    err := WriteToConn(conn, ConvertToRESPSimpleString(PONG))
+    if err != nil {
+        fmt.Println("Error while sending the message:", err.Error())
+    }
 }
 
 func Echo(conn net.Conn, arguments []string) {

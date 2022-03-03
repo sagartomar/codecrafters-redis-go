@@ -56,13 +56,13 @@ func HandleConnection(conn net.Conn) {
 }
 
 func ProcessInput(reader *bufio.Reader) ([]string, error) {
-    input, err := reader.ReadString('\r')
+    input, err := reader.ReadString('\n')
     if err != nil {
         fmt.Println("Error while reading data:", err.Error())
         return nil, err
     }
-    input = RemoveCR(input)
     input = RemoveLF(input)
+    input = RemoveCR(input)
     if input[0] != '*' {
         fmt.Println("Invalid character:", input[0])
         return []string {"PING"}, nil
@@ -85,13 +85,13 @@ func ProcessInput(reader *bufio.Reader) ([]string, error) {
 }
 
 func ProcessElement(reader *bufio.Reader) *string {
-    input, err := reader.ReadString('\r')
+    input, err := reader.ReadString('\n')
     if err != nil {
         fmt.Println("Error while reading element size:", err.Error())
         return nil
     }
-    input = RemoveCR(input)
     input = RemoveLF(input)
+    input = RemoveCR(input)
     if input[0] != '$' {
         fmt.Println("Invalid character:", input[0])
         return nil
@@ -102,13 +102,13 @@ func ProcessElement(reader *bufio.Reader) *string {
         return nil
     }
     fmt.Println(elementLength)
-    input, err = reader.ReadString('\r')
+    input, err = reader.ReadString('\n')
     if err != nil {
         fmt.Println("Error while reading element:", err.Error())
         return nil
     }
-    input = RemoveCR(input)
     input = RemoveLF(input)
+    input = RemoveCR(input)
     if len(input) != elementLength {
         fmt.Printf("Size mismatch: %d != %d\n", elementLength, len(input))
         return nil
@@ -151,8 +151,8 @@ func RemoveCR(input string) string {
 }
 
 func RemoveLF(input string) string {
-    if input[0] == '\n' {
-        return input[1 : ]
+    if input[len(input) - 1] == '\n' {
+        return input[0 : len(input) - 1]
     }
     return input
 }

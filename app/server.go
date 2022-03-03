@@ -6,6 +6,7 @@ import (
 	"os"
     "bufio"
     "strconv"
+    "strings"
 )
 
 const (
@@ -117,13 +118,11 @@ func ProcessElement(reader *bufio.Reader) *string {
 }
 
 func ExecuteCommand(input []string, conn net.Conn) {
-    switch(input[0]) {
+    switch(strings.ToUpper(input[0])) {
     case "PING":
         Ping(conn)
     case "ECHO":
         Echo(conn, input[1 :])
-    default:
-        Ping(conn)
     }
 }
 

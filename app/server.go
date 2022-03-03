@@ -122,6 +122,8 @@ func ExecuteCommand(input []string, conn net.Conn) {
         Ping(conn)
     case "ECHO":
         Echo(conn, input[1 :])
+    default:
+        Ping(conn)
     }
 }
 

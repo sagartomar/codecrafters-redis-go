@@ -23,3 +23,29 @@ func TestRESPBulkString(t *testing.T) {
         t.Errorf("Expected %s but received %s", expected, output)
     }
 }
+
+func TestRemoveCR(t *testing.T) {
+
+    t.Run("Carriage return should be removed if present as the last character", func(t *testing.T) {
+        input := "test\r"
+        expected := "test"
+
+        output := RemoveCR(input)
+
+        if output != expected {
+            t.Errorf("Expected %s but received %s", expected, output)
+        }
+    })
+
+    t.Run("If carriage return is not last character then input string should be returned", func(t *testing.T) {
+        input := "test"
+        expected := input
+
+        output := RemoveCR(input)
+
+        if output != expected {
+            t.Errorf("Expected %s but received %s", expected, output)
+        }
+    })
+
+}

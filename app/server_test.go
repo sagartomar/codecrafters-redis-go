@@ -49,3 +49,29 @@ func TestRemoveCR(t *testing.T) {
     })
 
 }
+
+func TestRemoveLF(t *testing.T) {
+
+    t.Run("Linefeed should be removed if present as the last character", func(t *testing.T) {
+        input := "test\n"
+        expected := "test"
+
+        output := RemoveLF(input)
+
+        if output != expected {
+            t.Errorf("Expected %s but received %s", expected, output)
+        }
+    })
+
+    t.Run("If linefeed is not last character then input string should be returned", func(t *testing.T) {
+        input := "test"
+        expected := input
+
+        output := RemoveLF(input)
+
+        if output != expected {
+            t.Errorf("Expected %s but received %s", expected, output)
+        }
+    })
+
+}

@@ -10,7 +10,6 @@ import (
 )
 
 const (
-    PONG string = "PONG"
     PLUS string = "+"
     CRLF string = "\r\n"
 )

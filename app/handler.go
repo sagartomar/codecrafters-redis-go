@@ -14,3 +14,8 @@ func (h *Handler) Ping() error {
     _, err := h.writer.Write([]byte(ConvertToRESPSimpleString(PONG)))
     return err
 }
+
+func (h *Handler) Echo(message string) error {
+    _, err := h.writer.Write([]byte(ConvertToRESPBulkString(message)))
+    return err
+}

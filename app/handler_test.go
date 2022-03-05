@@ -12,11 +12,31 @@ func TestPing(t *testing.T) {
 
     err := mockHandler.Ping()
 
-    if err != nil {
-        t.Fatalf("Didn't expect error but received error %v", err)
-    }
+    AssertNoError(t, err)
 
     received := buffer.String()
 
     AssertStringEqual(t, received, expected)
+}
+
+func TestEcho(t *testing.T) {
+    buffer := &bytes.Buffer{}
+    mockHandler := Handler {writer: buffer}
+    input := "testing"
+    expected := "$7\r\ntesting\r\n"
+
+    err := mockHandler.Echo(input)
+
+    AssertNoError(t, err)
+
+    received := buffer.String()
+
+    AssertStringEqual(t, received, expected)
+}
+
+func AssertNoError(t testing.TB, err error) {
+    t.Helper()
+    if err != nil {
+        t.Fatalf("Didn't expect an error but received error %v", err)
+    }
 }

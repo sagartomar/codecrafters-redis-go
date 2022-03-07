@@ -49,3 +49,28 @@ func (h *Handler) ReadRESPBulkString() (string, error) {
     }
     return input, nil
 }
+
+func (h *Handler) ReadRESPArray() ([]string, error) {
+    input, err := h.reader.ReadString('\n')
+    if err != nil {
+        return nil, err
+    }
+    input = RemoveLF(input)
+    input = RemoveCR(input)
+    if input[0] != '*' {
+        return nil, fmt.Errorf("Expected '*' but received %c as first character", input[0])
+    }
+    length, err := strconv.Atoi(input[1:])
+    if err != nil {
+        return nil, err
+    }
+    arr := make([]string, length)
+    for i := 0; i < length; i++ {
+        element, err := h.ReadRESPBulkString()
+        if err != nil {
+            return nil, err
+        }
+        arr[i] = element
+    }
+    return arr, nil
+}

@@ -100,22 +100,40 @@ func TestReadRESPArray(t *testing.T) {
 }
 
 func TestHandler(t *testing.T) {
-    server, client := net.Pipe()
-    handler := NewHandler(server)
-    clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
-    reader := bufio.NewReader(client)
-    send := "*1\r\n$4\r\nPING\n"
-    expected := "+PONG\r\n"
 
-    go handler.HandleConnection()
-    _, err := clientRW.WriteString(send)
-    clientRW.Flush()
-    AssertNoError(t, err)
+    tests := []struct {
+        description string
+        payload string
+        expected string
+    }{
+        {
+            "PING should reply with PONG",
+            "*1\r\n$4\r\nPING\r\n",
+            "+PONG\r\n",
+        },
+    }
 
-    received, err := reader.ReadString('\n')
-    AssertNoError(t, err)
+    for _, test := range tests {
+        t.Run(test.description, func(t *testing.T) {
 
-    AssertStringEqual(t, received, expected)
+            server, client := net.Pipe()
+            handler := NewHandler(server)
+            clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
+            reader := bufio.NewReader(client)
+
+            go handler.HandleConnection()
+            _, err := clientRW.WriteString(test.payload)
+            clientRW.Flush()
+            AssertNoError(t, err)
+
+            received, err := reader.ReadString('\n')
+            AssertNoError(t, err)
+
+            AssertStringEqual(t, received, test.expected)
+
+        })
+    }
+
 }
 
 func AssertError(t testing.TB, err error) {

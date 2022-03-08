@@ -3,13 +3,14 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"net"
 	"reflect"
 	"testing"
 )
 
 func TestPing(t *testing.T) {
     buffer := &bytes.Buffer{}
-    mockHandler := Handler {writer: buffer}
+    mockHandler := Handler {writer: bufio.NewWriter(buffer)}
     expected := "+PONG\r\n"
 
     err := mockHandler.Ping()
@@ -23,7 +24,7 @@ func TestPing(t *testing.T) {
 
 func TestEcho(t *testing.T) {
     buffer := &bytes.Buffer{}
-    mockHandler := Handler {writer: buffer}
+    mockHandler := Handler {writer: bufio.NewWriter(buffer)}
     input := "testing"
     expected := "$7\r\ntesting\r\n"
 
@@ -96,6 +97,25 @@ func TestReadRESPArray(t *testing.T) {
         }
     })
 
+}
+
+func TestHandler(t *testing.T) {
+    server, client := net.Pipe()
+    handler := NewHandler(server)
+    clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
+    reader := bufio.NewReader(client)
+    send := "*1\r\n$4\r\nPING\n"
+    expected := "+PONG\r\n"
+
+    go handler.HandleConnection()
+    _, err := clientRW.WriteString(send)
+    clientRW.Flush()
+    AssertNoError(t, err)
+
+    received, err := reader.ReadString('\n')
+    AssertNoError(t, err)
+
+    AssertStringEqual(t, received, expected)
 }
 
 func AssertError(t testing.TB, err error) {

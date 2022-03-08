@@ -31,7 +31,9 @@ func main() {
             os.Exit(1)
         }   
 
-        go HandleConnection(conn)
+        // go HandleConnection(conn)
+        handler := NewHandler(conn)
+        go handler.HandleConnection()
     }
 }
 

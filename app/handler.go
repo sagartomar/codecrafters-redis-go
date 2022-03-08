@@ -3,24 +3,44 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io"
+	"net"
 	"strconv"
 )
 
 const PONG string = "PONG"
 
 type Handler struct {
+    conn net.Conn
     reader *bufio.Reader
-    writer io.Writer
+    writer *bufio.Writer
+}
+
+func NewHandler(conn net.Conn) *Handler {
+    if conn == nil {
+        return nil
+    }
+    h := Handler {conn: conn}
+    h.reader = bufio.NewReader(h.conn)
+    h.writer = bufio.NewWriter(h.conn)
+    return &h
+}
+
+func (h *Handler) HandleConnection() {
+    for {
+        h.ReadRESPArray()
+        h.Ping()
+    }
 }
 
 func (h *Handler) Ping() error {
-    _, err := h.writer.Write([]byte(ConvertToRESPSimpleString(PONG)))
+    _, err := h.writer.WriteString(ConvertToRESPSimpleString(PONG))
+    h.writer.Flush()
     return err
 }
 
 func (h *Handler) Echo(message string) error {
-    _, err := h.writer.Write([]byte(ConvertToRESPBulkString(message)))
+    _, err := h.writer.WriteString(ConvertToRESPBulkString(message))
+    h.writer.Flush()
     return err
 }
 

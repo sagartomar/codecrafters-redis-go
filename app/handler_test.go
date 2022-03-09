@@ -62,6 +62,17 @@ func TestReadRESPBulkString(t *testing.T) {
         AssertStringEqual(t, received, "")
     })
 
+    t.Run("ReadRESPBulkString should return an error when string length is not a number", func(t *testing.T) {
+        buffer := bytes.NewBufferString("$ab\r\ntesting\r\n")
+        mockHandler := Handler {reader: bufio.NewReader(buffer)}
+        
+        received, err := mockHandler.ReadRESPBulkString()
+
+        AssertError(t, err)
+        AssertStringEqual(t, received, "")
+
+    })
+
     t.Run("ReadRESPBulkString should return an error when size and string length are not equal", func(t *testing.T) {
         buffer := bytes.NewBufferString("$4\r\ntest string\r\n")
         mockHandler := Handler {reader: bufio.NewReader(buffer)}

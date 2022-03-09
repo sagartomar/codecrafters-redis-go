@@ -111,6 +111,11 @@ func TestHandler(t *testing.T) {
             "*1\r\n$4\r\nPING\r\n",
             "+PONG\r\n",
         },
+        {
+            "ECHO should reply with the argument back",
+            "*2\r\n$4\r\nECHO\r\n$4\r\ntest\r\n",
+            "$4\r\ntest\r\n",
+        },
     }
 
     for _, test := range tests {
@@ -119,16 +124,17 @@ func TestHandler(t *testing.T) {
             server, client := net.Pipe()
             handler := NewHandler(server)
             clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
-            reader := bufio.NewReader(client)
 
             go handler.HandleConnection()
             _, err := clientRW.WriteString(test.payload)
             clientRW.Flush()
             AssertNoError(t, err)
 
-            received, err := reader.ReadString('\n')
+            buffer := make([]byte, len(test.expected))
+            _, err = clientRW.Read(buffer)
             AssertNoError(t, err)
 
+            received := string(buffer)
             AssertStringEqual(t, received, test.expected)
 
         })

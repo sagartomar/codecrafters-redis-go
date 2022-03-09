@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 )
 
 const PONG string = "PONG"
@@ -27,8 +28,13 @@ func NewHandler(conn net.Conn) *Handler {
 
 func (h *Handler) HandleConnection() {
     for {
-        h.ReadRESPArray()
-        h.Ping()
+        array, _ := h.ReadRESPArray()
+        switch strings.ToUpper(array[0]) {
+        case "PING":
+            h.Ping()
+        case "ECHO":
+            h.Echo(array[1])
+        }
     }
 }
 

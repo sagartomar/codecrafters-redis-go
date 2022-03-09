@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"io"
 	"net"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestPing(t *testing.T) {
@@ -100,6 +102,23 @@ func TestReadRESPArray(t *testing.T) {
 }
 
 func TestHandler(t *testing.T) {
+
+    t.Run("Handler should close the connection once the client closes it", func(t *testing.T) {
+        server, client := net.Pipe()
+        handler := NewHandler(server)
+        buffer := make([]byte, 5)
+
+        go handler.HandleConnection()
+        client.Close()
+        // Need to wait so that handler can close the connection
+        time.Sleep(50 * time.Millisecond)
+
+        _, err := server.Read(buffer)
+        if err != io.ErrClosedPipe {
+            t.Errorf("Expected %v but received %v", io.ErrClosedPipe, err)
+        }
+
+    })
 
     tests := []struct {
         description string

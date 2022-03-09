@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -28,12 +29,18 @@ func NewHandler(conn net.Conn) *Handler {
 
 func (h *Handler) HandleConnection() {
     for {
-        array, _ := h.ReadRESPArray()
-        switch strings.ToUpper(array[0]) {
-        case "PING":
-            h.Ping()
-        case "ECHO":
-            h.Echo(array[1])
+        array, err := h.ReadRESPArray()
+        if err == io.EOF {
+            h.conn.Close()
+            break
+        }
+        if array != nil {
+            switch strings.ToUpper(array[0]) {
+            case "PING":
+                h.Ping()
+            case "ECHO":
+                h.Echo(array[1])
+            }
         }
     }
 }

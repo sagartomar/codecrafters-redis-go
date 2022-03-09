@@ -85,6 +85,15 @@ func TestReadRESPArray(t *testing.T) {
         AssertError(t, err)
     })
 
+    t.Run("ReadRESPArray returns an error when the array size is not number", func(t *testing.T) {
+        buffer := bytes.NewBufferString("*ab\r\n$4\r\ntest\r\n$5\r\narray\r\n")
+        mockHandler := Handler {reader: bufio.NewReader(buffer)}
+
+        _, err := mockHandler.ReadRESPArray()
+
+        AssertError(t, err)
+    })
+
     t.Run("ReadRESPArray returns correct array after processing input", func(t *testing.T) {
         buffer := bytes.NewBufferString("*2\r\n$4\r\ntest\r\n$5\r\narray\r\n")
         mockHandler := Handler {reader: bufio.NewReader(buffer)}

@@ -7,8 +7,8 @@ import (
 )
 
 const (
-    PLUS string = "+"
-    CRLF string = "\r\n"
+	PLUS string = "+"
+	CRLF string = "\r\n"
 )
 
 func main() {
@@ -19,38 +19,38 @@ func main() {
 	if err != nil {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
-    }
+	}
 
-    for {
-        conn, err := l.Accept()
-        if err != nil {
-            fmt.Println("Error accepting connection: ", err.Error())
-            os.Exit(1)
-        }   
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
 
-        handler := NewHandler(conn)
-        go handler.HandleConnection()
-    }
+		handler := NewHandler(conn)
+		go handler.HandleConnection()
+	}
 }
 
 func RemoveCR(input string) string {
-    if input[len(input) - 1] == '\r' {
-        return input[0 : len(input) - 1]
-    }
-    return input
+	if input[len(input)-1] == '\r' {
+		return input[0 : len(input)-1]
+	}
+	return input
 }
 
 func RemoveLF(input string) string {
-    if input[len(input) - 1] == '\n' {
-        return input[0 : len(input) - 1]
-    }
-    return input
+	if input[len(input)-1] == '\n' {
+		return input[0 : len(input)-1]
+	}
+	return input
 }
 
 func ConvertToRESPSimpleString(message string) string {
-    return PLUS + message + CRLF
+	return PLUS + message + CRLF
 }
 
 func ConvertToRESPBulkString(message string) string {
-    return fmt.Sprintf("$%d\r\n%s\r\n", len(message), message)
+	return fmt.Sprintf("$%d\r\n%s\r\n", len(message), message)
 }

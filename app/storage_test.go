@@ -5,7 +5,7 @@ import "testing"
 func TestSet(t *testing.T) {
 	key := "test_key"
 	expected := "test_value"
-	kv := NewKV()
+	kv := NewInMemoryKV()
 
 	kv.Set(key, expected)
 
@@ -15,7 +15,7 @@ func TestSet(t *testing.T) {
 func TestGet(t *testing.T) {
 	key := "test_key"
 	expected := "test_value"
-	kv := NewKV()
+	kv := NewInMemoryKV()
 	kv.data[key] = expected
 
 	received := kv.Get(key)

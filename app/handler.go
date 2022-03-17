@@ -37,7 +37,7 @@ func (h *Handler) HandleConnection() {
 		if array != nil {
 			switch strings.ToUpper(array[0]) {
 			case "PING":
-				h.Ping()
+				h.Ping(array)
 			case "ECHO":
 				h.Echo(array)
 			}
@@ -45,7 +45,13 @@ func (h *Handler) HandleConnection() {
 	}
 }
 
-func (h *Handler) Ping() error {
+func (h *Handler) Ping(arguments []string) error {
+    if len(arguments) != 1 {
+        return fmt.Errorf("Expected 1 argument but received %d", len(arguments))
+    }
+    if strings.ToUpper(arguments[0]) != "PING" {
+        return fmt.Errorf("Expected 'PING' but received %s", arguments[0])
+    }
 	_, err := h.writer.WriteString(ConvertToRESPSimpleString(PONG))
 	h.writer.Flush()
 	return err

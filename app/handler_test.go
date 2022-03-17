@@ -11,17 +11,41 @@ import (
 )
 
 func TestPing(t *testing.T) {
-	buffer := &bytes.Buffer{}
-	mockHandler := Handler{writer: bufio.NewWriter(buffer)}
-	expected := "+PONG\r\n"
 
-	err := mockHandler.Ping()
+    t.Run("Ping should reply with PONG", func(t *testing.T) {
+        buffer := &bytes.Buffer{}
+        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+        input := []string{"PING"}
+        expected := "+PONG\r\n"
 
-	AssertNoError(t, err)
+        err := mockHandler.Ping(input)
 
-	received := buffer.String()
+        AssertNoError(t, err)
 
-	AssertStringEqual(t, received, expected)
+        received := buffer.String()
+
+        AssertStringEqual(t, received, expected)
+    })
+
+    t.Run("Ping should return an error if argument length is not 1", func(t *testing.T) {
+        buffer := &bytes.Buffer{}
+        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+        input := []string{"PING", "some", "data"}
+
+        err := mockHandler.Ping(input)
+
+        AssertError(t, err)
+    })
+
+    t.Run("Ping should return an error if first argument is not 'ping'", func(t *testing.T) {
+        buffer := &bytes.Buffer{}
+        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+        input := []string{"SomeCommand"}
+
+        err := mockHandler.Ping(input)
+
+        AssertError(t, err)
+    })
 }
 
 func TestEcho(t *testing.T) {

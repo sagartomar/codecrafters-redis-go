@@ -25,18 +25,41 @@ func TestPing(t *testing.T) {
 }
 
 func TestEcho(t *testing.T) {
-	buffer := &bytes.Buffer{}
-	mockHandler := Handler{writer: bufio.NewWriter(buffer)}
-	input := "testing"
-	expected := "$7\r\ntesting\r\n"
 
-	err := mockHandler.Echo(input)
+    t.Run("Echo should reply with the passed argument", func(t *testing.T) {
+        buffer := &bytes.Buffer{}
+        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+        input := []string{"ECHO", "testing"}
+        expected := "$7\r\ntesting\r\n"
 
-	AssertNoError(t, err)
+        err := mockHandler.Echo(input)
 
-	received := buffer.String()
+        AssertNoError(t, err)
 
-	AssertStringEqual(t, received, expected)
+        received := buffer.String()
+
+        AssertStringEqual(t, received, expected)
+    })
+
+    t.Run("Echo should return an error if argument length is not 2", func(t *testing.T) {
+        buffer := &bytes.Buffer{}
+        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+        input := []string{"ECHO"}
+
+        err := mockHandler.Echo(input)
+
+        AssertError(t, err)
+    })
+
+    t.Run("Echo should return an error if first argument is not 'echo'", func(t *testing.T) {
+        buffer := &bytes.Buffer{}
+        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+        input := []string{"something", "test string"}
+
+        err := mockHandler.Echo(input)
+
+        AssertError(t, err)
+    })
 }
 
 func TestReadRESPBulkString(t *testing.T) {

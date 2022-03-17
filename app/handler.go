@@ -39,7 +39,7 @@ func (h *Handler) HandleConnection() {
 			case "PING":
 				h.Ping()
 			case "ECHO":
-				h.Echo(array[1])
+				h.Echo(array)
 			}
 		}
 	}
@@ -51,8 +51,14 @@ func (h *Handler) Ping() error {
 	return err
 }
 
-func (h *Handler) Echo(message string) error {
-	_, err := h.writer.WriteString(ConvertToRESPBulkString(message))
+func (h *Handler) Echo(arguments []string) error {
+    if len(arguments) != 2 {
+        return fmt.Errorf("Expected 2 arguments but received %d", len(arguments))
+    }
+    if strings.ToUpper(arguments[0]) != "ECHO" {
+        return fmt.Errorf("Expected 'ECHO' but received %s", arguments[0])
+    }
+	_, err := h.writer.WriteString(ConvertToRESPBulkString(arguments[1]))
 	h.writer.Flush()
 	return err
 }

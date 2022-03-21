@@ -170,22 +170,11 @@ func TestReadRESPArray(t *testing.T) {
 
 func TestHandler(t *testing.T) {
 
-	t.Run("Handler should close the connection once the client closes it", func(t *testing.T) {
-		server, client := net.Pipe()
-		handler := NewHandler(server)
-		buffer := make([]byte, 5)
+    server, client := net.Pipe()
+    handler := NewHandler(server)
+    clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
 
-		go handler.HandleConnection()
-		client.Close()
-		// Need to wait so that handler can close the connection
-		time.Sleep(50 * time.Millisecond)
-
-		_, err := server.Read(buffer)
-		if err != io.ErrClosedPipe {
-			t.Errorf("Expected %v but received %v", io.ErrClosedPipe, err)
-		}
-
-	})
+    go handler.HandleConnection()
 
 	tests := []struct {
 		description string
@@ -207,11 +196,6 @@ func TestHandler(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 
-			server, client := net.Pipe()
-			handler := NewHandler(server)
-			clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
-
-			go handler.HandleConnection()
 			_, err := clientRW.WriteString(test.payload)
 			clientRW.Flush()
 			AssertNoError(t, err)
@@ -225,6 +209,20 @@ func TestHandler(t *testing.T) {
 
 		})
 	}
+
+	t.Run("Handler should close the connection once the client closes it", func(t *testing.T) {
+		buffer := make([]byte, 5)
+
+		client.Close()
+		// Need to wait so that handler can close the connection
+		time.Sleep(50 * time.Millisecond)
+
+		_, err := server.Read(buffer)
+		if err != io.ErrClosedPipe {
+			t.Errorf("Expected %v but received %v", io.ErrClosedPipe, err)
+		}
+
+	})
 
 }
 

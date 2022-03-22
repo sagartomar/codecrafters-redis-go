@@ -86,6 +86,31 @@ func TestEcho(t *testing.T) {
     })
 }
 
+func TestSetValue(t *testing.T) {
+
+    t.Run("Set should save the provided key value pair in the storage and reply with OK", func(t *testing.T) {
+        buffer := &bytes.Buffer{}
+        kv := NewInMemoryKV()
+        mockHandler := Handler{
+            writer: bufio.NewWriter(buffer),
+            store: kv,
+        }
+        key := "some_key"
+        value := "some_value"
+        input := []string{"SET", key, value}
+        expected := "+OK\r\n"
+
+        mockHandler.Set(input)
+
+        AssertStringEqual(t, kv.Get(key), value)
+
+        received := buffer.String()
+
+        AssertStringEqual(t, received, expected)
+    })
+
+}
+
 func TestReadRESPBulkString(t *testing.T) {
 
 	t.Run("ReadRESPBulkString should process the RESP bulk string and return the correct string", func(t *testing.T) {

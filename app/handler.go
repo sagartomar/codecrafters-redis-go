@@ -9,12 +9,16 @@ import (
 	"strings"
 )
 
-const PONG string = "PONG"
+const (
+    PONG string = "PONG"
+    OK string = "OK"
+)
 
 type Handler struct {
 	conn   net.Conn
 	reader *bufio.Reader
 	writer *bufio.Writer
+    store *InMemoryKV
 }
 
 func NewHandler(conn net.Conn) *Handler {
@@ -67,6 +71,12 @@ func (h *Handler) Echo(arguments []string) error {
 	_, err := h.writer.WriteString(ConvertToRESPBulkString(arguments[1]))
 	h.writer.Flush()
 	return err
+}
+
+func (h *Handler) Set(arguments []string) {
+    h.store.Set(arguments[1], arguments[2])
+    h.writer.WriteString(ConvertToRESPSimpleString(OK))
+    h.writer.Flush()
 }
 
 func (h *Handler) ReadRESPBulkString() (string, error) {

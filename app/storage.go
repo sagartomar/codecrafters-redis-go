@@ -1,6 +1,9 @@
 package main
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 type InMemoryKV struct {
 	lock *sync.Mutex
@@ -20,8 +23,12 @@ func (kv *InMemoryKV) Set(key, value string) {
 	kv.lock.Unlock()
 }
 
-func (kv *InMemoryKV) Get(key string) string {
+func (kv *InMemoryKV) Get(key string) (error, string) {
 	kv.lock.Lock()
 	defer kv.lock.Unlock()
-	return kv.data[key]
+    if val, ok := kv.data[key]; ok {
+        return nil, val
+    }
+    err := fmt.Errorf("Key: %s doesn't exist", key)
+    return err, ""
 }

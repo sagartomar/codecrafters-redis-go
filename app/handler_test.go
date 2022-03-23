@@ -102,9 +102,10 @@ func TestSetValue(t *testing.T) {
 
         mockHandler.Set(input)
 
-        AssertStringEqual(t, kv.Get(key), value)
+        _, received := kv.Get(key)
+        AssertStringEqual(t, received, value)
 
-        received := buffer.String()
+        received = buffer.String()
 
         AssertStringEqual(t, received, expected)
     })

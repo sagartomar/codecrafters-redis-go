@@ -112,6 +112,48 @@ func TestSetValue(t *testing.T) {
 
 }
 
+func TestGetValue(t *testing.T) {
+
+    t.Run("Get should return the value for the provided key", func(t *testing.T) {
+        kv := NewInMemoryKV()
+        key := "test_key"
+        value := "test_value"
+        kv.Set(key, value)
+        buffer := &bytes.Buffer{}
+        mockHandler := Handler{
+            writer: bufio.NewWriter(buffer),
+            store: kv,
+        }
+        input := []string{"GET", key}
+        expected := "$10\r\ntest_value\r\n"
+
+        mockHandler.Get(input)
+
+        received := buffer.String()
+
+        AssertStringEqual(t, received, expected)
+    })
+
+    t.Run("Get should return null bulk string if key doesn't exist", func(t *testing.T) {
+        kv := NewInMemoryKV()
+        key := "doesnt_exist"
+        buffer := &bytes.Buffer{}
+        mockHandler := Handler{
+            writer: bufio.NewWriter(buffer),
+            store: kv,
+        }
+        input := []string{"GET", key}
+        expected := "$-1\r\n"
+
+        mockHandler.Get(input)
+
+        received := buffer.String()
+
+        AssertStringEqual(t, received, expected)
+    })
+
+}
+
 func TestReadRESPBulkString(t *testing.T) {
 
 	t.Run("ReadRESPBulkString should process the RESP bulk string and return the correct string", func(t *testing.T) {
@@ -197,7 +239,8 @@ func TestReadRESPArray(t *testing.T) {
 func TestHandler(t *testing.T) {
 
     server, client := net.Pipe()
-    handler := NewHandler(server)
+    kv := NewInMemoryKV()
+    handler := NewHandler(server, kv)
     clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
 
     go handler.HandleConnection()
@@ -217,6 +260,21 @@ func TestHandler(t *testing.T) {
 			"*2\r\n$4\r\nECHO\r\n$4\r\ntest\r\n",
 			"$4\r\ntest\r\n",
 		},
+        {
+            "SET should reply with OK",
+            "*3\r\n$3\r\nSET\r\n$6\r\ntest_k\r\n$6\r\ntest_v\r\n",
+            "+OK\r\n",
+        },
+        {
+            "GET should reply with correct value for the key",
+            "*2\r\n$3\r\nGET\r\n$6\r\ntest_k\r\n",
+            "$6\r\ntest_v\r\n",
+        },
+        {
+            "GET should reply with null bulk string for non-existing key",
+            "*2\r\n$3\r\nGET\r\n$8\r\nkey_miss\r\n",
+            "$-1\r\n",
+        },
 	}
 
 	for _, test := range tests {

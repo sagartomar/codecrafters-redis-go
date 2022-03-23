@@ -12,6 +12,7 @@ import (
 const (
     PONG string = "PONG"
     OK string = "OK"
+    NULL_BULK_STRING = "$-1\r\n"
 )
 
 type Handler struct {
@@ -21,11 +22,11 @@ type Handler struct {
     store *InMemoryKV
 }
 
-func NewHandler(conn net.Conn) *Handler {
+func NewHandler(conn net.Conn, store *InMemoryKV) *Handler {
 	if conn == nil {
 		return nil
 	}
-	h := Handler{conn: conn}
+	h := Handler{conn: conn, store: store}
 	h.reader = bufio.NewReader(h.conn)
 	h.writer = bufio.NewWriter(h.conn)
 	return &h
@@ -44,6 +45,10 @@ func (h *Handler) HandleConnection() {
 				h.Ping(array)
 			case "ECHO":
 				h.Echo(array)
+            case "SET":
+                h.Set(array)
+            case "GET":
+                h.Get(array)
 			}
 		}
 	}
@@ -76,6 +81,17 @@ func (h *Handler) Echo(arguments []string) error {
 func (h *Handler) Set(arguments []string) {
     h.store.Set(arguments[1], arguments[2])
     h.writer.WriteString(ConvertToRESPSimpleString(OK))
+    h.writer.Flush()
+}
+
+func (h *Handler) Get(arguments []string) {
+    err, value := h.store.Get(arguments[1])
+    if err != nil {
+        h.writer.WriteString(NULL_BULK_STRING)
+        h.writer.Flush()
+        return
+    }
+    h.writer.WriteString(ConvertToRESPBulkString(value))
     h.writer.Flush()
 }
 

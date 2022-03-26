@@ -6,13 +6,13 @@ import (
 )
 
 type InMemoryKV struct {
-	lock *sync.Mutex
+	lock *sync.RWMutex
 	data map[string]string
 }
 
 func NewInMemoryKV() *InMemoryKV {
 	return &InMemoryKV{
-		lock: &sync.Mutex{},
+		lock: &sync.RWMutex{},
 		data: make(map[string]string),
 	}
 }
@@ -24,8 +24,8 @@ func (kv *InMemoryKV) Set(key, value string) {
 }
 
 func (kv *InMemoryKV) Get(key string) (error, string) {
-	kv.lock.Lock()
-	defer kv.lock.Unlock()
+	kv.lock.RLock()
+	defer kv.lock.RUnlock()
     if val, ok := kv.data[key]; ok {
         return nil, val
     }

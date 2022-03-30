@@ -90,7 +90,7 @@ func TestSetValue(t *testing.T) {
 
     t.Run("Set should save the provided key value pair in the storage and reply with OK", func(t *testing.T) {
         buffer := &bytes.Buffer{}
-        kv := NewInMemoryKV()
+        kv := NewInMemoryKV(nil)
         mockHandler := Handler{
             writer: bufio.NewWriter(buffer),
             store: kv,
@@ -115,7 +115,7 @@ func TestSetValue(t *testing.T) {
 func TestGetValue(t *testing.T) {
 
     t.Run("Get should return the value for the provided key", func(t *testing.T) {
-        kv := NewInMemoryKV()
+        kv := NewInMemoryKV(nil)
         key := "test_key"
         value := "test_value"
         kv.Set(key, value)
@@ -135,7 +135,7 @@ func TestGetValue(t *testing.T) {
     })
 
     t.Run("Get should return null bulk string if key doesn't exist", func(t *testing.T) {
-        kv := NewInMemoryKV()
+        kv := NewInMemoryKV(nil)
         key := "doesnt_exist"
         buffer := &bytes.Buffer{}
         mockHandler := Handler{
@@ -239,7 +239,7 @@ func TestReadRESPArray(t *testing.T) {
 func TestHandler(t *testing.T) {
 
     server, client := net.Pipe()
-    kv := NewInMemoryKV()
+    kv := NewInMemoryKV(nil)
     handler := NewHandler(server, kv)
     clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
 

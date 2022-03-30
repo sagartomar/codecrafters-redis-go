@@ -10,6 +10,13 @@ type clock interface {
     GetTime() time.Time
 }
 
+type TimeWrapper struct {
+}
+
+func (tm *TimeWrapper) GetTime() time.Time {
+    return time.Now()
+}
+
 type tuple struct {
     value string
     expiry time.Time

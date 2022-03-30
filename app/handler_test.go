@@ -102,10 +102,36 @@ func TestSetValue(t *testing.T) {
 
         mockHandler.Set(input)
 
-        _, received := kv.Get(key)
-        AssertStringEqual(t, received, value)
+        received_tpl := kv.data[key]
+        AssertStringEqual(t, received_tpl.value, value)
+        AssertZeroTime(t, received_tpl.expiry)
 
-        received = buffer.String()
+        received := buffer.String()
+
+        AssertStringEqual(t, received, expected)
+    })
+
+    t.Run("Set should save the provided key value pair along with exipiration time in the storage and reply with OK", func(t *testing.T) {
+        buffer := &bytes.Buffer{}
+        tm := time.Now()
+        clk := mockClock {tm: tm}
+        kv := NewInMemoryKV(&clk)
+        mockHandler := Handler{
+            writer: bufio.NewWriter(buffer),
+            store: kv,
+        }
+        key := "key_expiry"
+        value := "value expiry"
+        input := []string{"SET", key, value, "PX", "200"}
+        expected := "+OK\r\n"
+
+        mockHandler.Set(input)
+
+        received_tpl := kv.data[key]
+        AssertStringEqual(t, received_tpl.value, value)
+        AssertTimeEqual(t, received_tpl.expiry, tm.Add(200 * time.Millisecond))
+
+        received := buffer.String()
 
         AssertStringEqual(t, received, expected)
     })
@@ -239,7 +265,7 @@ func TestReadRESPArray(t *testing.T) {
 func TestHandler(t *testing.T) {
 
     server, client := net.Pipe()
-    kv := NewInMemoryKV(nil)
+    kv := NewInMemoryKV(&TimeWrapper{})
     handler := NewHandler(server, kv)
     clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
 
@@ -275,24 +301,45 @@ func TestHandler(t *testing.T) {
             "*2\r\n$3\r\nGET\r\n$8\r\nkey_miss\r\n",
             "$-1\r\n",
         },
+        {
+            "SET with PX argument should reply with OK",
+            "*5\r\n$3\r\nSET\r\n$5\r\nkey_e\r\n$5\r\nval_e\r\n$2\r\nPX\r\n$3\r\n500\r\n",
+            "+OK\r\n",
+        },
+        {
+            "GET should reply with correct value before expiry",
+            "*2\r\n$3\r\nGET\r\n$5\r\nkey_e\r\n",
+            "$5\r\nval_e\r\n",
+        },
+        {
+            "GET should reply with null bulk string for expired key",
+            "*2\r\n$3\r\nGET\r\n$5\r\nkey_e\r\n",
+            "$-1\r\n",
+        },
 	}
 
-	for _, test := range tests {
-		t.Run(test.description, func(t *testing.T) {
+    RunHandlerTest := func (description, payload, expected string) {
+        t.Run(description, func(t *testing.T) {
+            _, err := clientRW.WriteString(payload)
+            clientRW.Flush()
+            AssertNoError(t, err)
 
-			_, err := clientRW.WriteString(test.payload)
-			clientRW.Flush()
-			AssertNoError(t, err)
+            buffer := make([]byte, len(expected))
+            _, err = clientRW.Read(buffer)
+            AssertNoError(t, err)
 
-			buffer := make([]byte, len(test.expected))
-			_, err = clientRW.Read(buffer)
-			AssertNoError(t, err)
+            received := string(buffer)
+            AssertStringEqual(t, received, expected)
+        })
+    }
 
-			received := string(buffer)
-			AssertStringEqual(t, received, test.expected)
-
-		})
+    for _, test := range tests[:7] {
+        RunHandlerTest(test.description, test.payload, test.expected)
 	}
+
+    time.Sleep(500 * time.Millisecond)
+
+    RunHandlerTest(tests[7].description, tests[7].payload, tests[7].expected)
 
 	t.Run("Handler should close the connection once the client closes it", func(t *testing.T) {
 		buffer := make([]byte, 5)

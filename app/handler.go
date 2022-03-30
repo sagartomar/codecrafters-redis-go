@@ -7,6 +7,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -79,7 +80,14 @@ func (h *Handler) Echo(arguments []string) error {
 }
 
 func (h *Handler) Set(arguments []string) {
-    h.store.Set(arguments[1], arguments[2])
+    switch(len(arguments)) {
+    case 3:
+        h.store.Set(arguments[1], arguments[2])
+    case 5:
+        dur_arg, _ := strconv.Atoi(arguments[4])
+        duration := time.Duration(dur_arg) * time.Millisecond
+        h.store.SetWithExpiry(arguments[1], arguments[2], duration)
+    }
     h.writer.WriteString(ConvertToRESPSimpleString(OK))
     h.writer.Flush()
 }

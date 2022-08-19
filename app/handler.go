@@ -11,16 +11,16 @@ import (
 )
 
 const (
-    PONG string = "PONG"
-    OK string = "OK"
-    NULL_BULK_STRING = "$-1\r\n"
+	PONG             string = "PONG"
+	OK               string = "OK"
+	NULL_BULK_STRING        = "$-1\r\n"
 )
 
 type Handler struct {
 	conn   net.Conn
 	reader *bufio.Reader
 	writer *bufio.Writer
-    store *InMemoryKV
+	store  *InMemoryKV
 }
 
 func NewHandler(conn net.Conn, store *InMemoryKV) *Handler {
@@ -46,61 +46,61 @@ func (h *Handler) HandleConnection() {
 				h.Ping(array)
 			case "ECHO":
 				h.Echo(array)
-            case "SET":
-                h.Set(array)
-            case "GET":
-                h.Get(array)
+			case "SET":
+				h.Set(array)
+			case "GET":
+				h.Get(array)
 			}
 		}
 	}
 }
 
 func (h *Handler) Ping(arguments []string) error {
-    if len(arguments) != 1 {
-        return fmt.Errorf("Expected 1 argument but received %d", len(arguments))
-    }
-    if strings.ToUpper(arguments[0]) != "PING" {
-        return fmt.Errorf("Expected 'PING' but received %s", arguments[0])
-    }
+	if len(arguments) != 1 {
+		return fmt.Errorf("Expected 1 argument but received %d", len(arguments))
+	}
+	if strings.ToUpper(arguments[0]) != "PING" {
+		return fmt.Errorf("Expected 'PING' but received %s", arguments[0])
+	}
 	_, err := h.writer.WriteString(ConvertToRESPSimpleString(PONG))
 	h.writer.Flush()
 	return err
 }
 
 func (h *Handler) Echo(arguments []string) error {
-    if len(arguments) != 2 {
-        return fmt.Errorf("Expected 2 arguments but received %d", len(arguments))
-    }
-    if strings.ToUpper(arguments[0]) != "ECHO" {
-        return fmt.Errorf("Expected 'ECHO' but received %s", arguments[0])
-    }
+	if len(arguments) != 2 {
+		return fmt.Errorf("Expected 2 arguments but received %d", len(arguments))
+	}
+	if strings.ToUpper(arguments[0]) != "ECHO" {
+		return fmt.Errorf("Expected 'ECHO' but received %s", arguments[0])
+	}
 	_, err := h.writer.WriteString(ConvertToRESPBulkString(arguments[1]))
 	h.writer.Flush()
 	return err
 }
 
 func (h *Handler) Set(arguments []string) {
-    switch(len(arguments)) {
-    case 3:
-        h.store.Set(arguments[1], arguments[2])
-    case 5:
-        dur_arg, _ := strconv.Atoi(arguments[4])
-        duration := time.Duration(dur_arg) * time.Millisecond
-        h.store.SetWithExpiry(arguments[1], arguments[2], duration)
-    }
-    h.writer.WriteString(ConvertToRESPSimpleString(OK))
-    h.writer.Flush()
+	switch len(arguments) {
+	case 3:
+		h.store.Set(arguments[1], arguments[2])
+	case 5:
+		dur_arg, _ := strconv.Atoi(arguments[4])
+		duration := time.Duration(dur_arg) * time.Millisecond
+		h.store.SetWithExpiry(arguments[1], arguments[2], duration)
+	}
+	h.writer.WriteString(ConvertToRESPSimpleString(OK))
+	h.writer.Flush()
 }
 
 func (h *Handler) Get(arguments []string) {
-    err, value := h.store.Get(arguments[1])
-    if err != nil {
-        h.writer.WriteString(NULL_BULK_STRING)
-        h.writer.Flush()
-        return
-    }
-    h.writer.WriteString(ConvertToRESPBulkString(value))
-    h.writer.Flush()
+	err, value := h.store.Get(arguments[1])
+	if err != nil {
+		h.writer.WriteString(NULL_BULK_STRING)
+		h.writer.Flush()
+		return
+	}
+	h.writer.WriteString(ConvertToRESPBulkString(value))
+	h.writer.Flush()
 }
 
 func (h *Handler) ReadRESPBulkString() (string, error) {

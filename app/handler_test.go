@@ -12,171 +12,171 @@ import (
 
 func TestPing(t *testing.T) {
 
-    t.Run("Ping should reply with PONG", func(t *testing.T) {
-        buffer := &bytes.Buffer{}
-        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
-        input := []string{"PING"}
-        expected := "+PONG\r\n"
+	t.Run("Ping should reply with PONG", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+		input := []string{"PING"}
+		expected := "+PONG\r\n"
 
-        err := mockHandler.Ping(input)
+		err := mockHandler.Ping(input)
 
-        AssertNoError(t, err)
+		AssertNoError(t, err)
 
-        received := buffer.String()
+		received := buffer.String()
 
-        AssertStringEqual(t, received, expected)
-    })
+		AssertStringEqual(t, received, expected)
+	})
 
-    t.Run("Ping should return an error if argument length is not 1", func(t *testing.T) {
-        buffer := &bytes.Buffer{}
-        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
-        input := []string{"PING", "some", "data"}
+	t.Run("Ping should return an error if argument length is not 1", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+		input := []string{"PING", "some", "data"}
 
-        err := mockHandler.Ping(input)
+		err := mockHandler.Ping(input)
 
-        AssertError(t, err)
-    })
+		AssertError(t, err)
+	})
 
-    t.Run("Ping should return an error if first argument is not 'ping'", func(t *testing.T) {
-        buffer := &bytes.Buffer{}
-        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
-        input := []string{"SomeCommand"}
+	t.Run("Ping should return an error if first argument is not 'ping'", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+		input := []string{"SomeCommand"}
 
-        err := mockHandler.Ping(input)
+		err := mockHandler.Ping(input)
 
-        AssertError(t, err)
-    })
+		AssertError(t, err)
+	})
 }
 
 func TestEcho(t *testing.T) {
 
-    t.Run("Echo should reply with the passed argument", func(t *testing.T) {
-        buffer := &bytes.Buffer{}
-        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
-        input := []string{"ECHO", "testing"}
-        expected := "$7\r\ntesting\r\n"
+	t.Run("Echo should reply with the passed argument", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+		input := []string{"ECHO", "testing"}
+		expected := "$7\r\ntesting\r\n"
 
-        err := mockHandler.Echo(input)
+		err := mockHandler.Echo(input)
 
-        AssertNoError(t, err)
+		AssertNoError(t, err)
 
-        received := buffer.String()
+		received := buffer.String()
 
-        AssertStringEqual(t, received, expected)
-    })
+		AssertStringEqual(t, received, expected)
+	})
 
-    t.Run("Echo should return an error if argument length is not 2", func(t *testing.T) {
-        buffer := &bytes.Buffer{}
-        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
-        input := []string{"ECHO"}
+	t.Run("Echo should return an error if argument length is not 2", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+		input := []string{"ECHO"}
 
-        err := mockHandler.Echo(input)
+		err := mockHandler.Echo(input)
 
-        AssertError(t, err)
-    })
+		AssertError(t, err)
+	})
 
-    t.Run("Echo should return an error if first argument is not 'echo'", func(t *testing.T) {
-        buffer := &bytes.Buffer{}
-        mockHandler := Handler{writer: bufio.NewWriter(buffer)}
-        input := []string{"something", "test string"}
+	t.Run("Echo should return an error if first argument is not 'echo'", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		mockHandler := Handler{writer: bufio.NewWriter(buffer)}
+		input := []string{"something", "test string"}
 
-        err := mockHandler.Echo(input)
+		err := mockHandler.Echo(input)
 
-        AssertError(t, err)
-    })
+		AssertError(t, err)
+	})
 }
 
 func TestSetValue(t *testing.T) {
 
-    t.Run("Set should save the provided key value pair in the storage and reply with OK", func(t *testing.T) {
-        buffer := &bytes.Buffer{}
-        kv := NewInMemoryKV(nil)
-        mockHandler := Handler{
-            writer: bufio.NewWriter(buffer),
-            store: kv,
-        }
-        key := "some_key"
-        value := "some_value"
-        input := []string{"SET", key, value}
-        expected := "+OK\r\n"
+	t.Run("Set should save the provided key value pair in the storage and reply with OK", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		kv := NewInMemoryKV(nil)
+		mockHandler := Handler{
+			writer: bufio.NewWriter(buffer),
+			store:  kv,
+		}
+		key := "some_key"
+		value := "some_value"
+		input := []string{"SET", key, value}
+		expected := "+OK\r\n"
 
-        mockHandler.Set(input)
+		mockHandler.Set(input)
 
-        received_tpl := kv.data[key]
-        AssertStringEqual(t, received_tpl.value, value)
-        AssertZeroTime(t, received_tpl.expiry)
+		received_tpl := kv.data[key]
+		AssertStringEqual(t, received_tpl.value, value)
+		AssertZeroTime(t, received_tpl.expiry)
 
-        received := buffer.String()
+		received := buffer.String()
 
-        AssertStringEqual(t, received, expected)
-    })
+		AssertStringEqual(t, received, expected)
+	})
 
-    t.Run("Set should save the provided key value pair along with exipiration time in the storage and reply with OK", func(t *testing.T) {
-        buffer := &bytes.Buffer{}
-        tm := time.Now()
-        clk := mockClock {tm: tm}
-        kv := NewInMemoryKV(&clk)
-        mockHandler := Handler{
-            writer: bufio.NewWriter(buffer),
-            store: kv,
-        }
-        key := "key_expiry"
-        value := "value expiry"
-        input := []string{"SET", key, value, "PX", "200"}
-        expected := "+OK\r\n"
+	t.Run("Set should save the provided key value pair along with exipiration time in the storage and reply with OK", func(t *testing.T) {
+		buffer := &bytes.Buffer{}
+		tm := time.Now()
+		clk := mockClock{tm: tm}
+		kv := NewInMemoryKV(&clk)
+		mockHandler := Handler{
+			writer: bufio.NewWriter(buffer),
+			store:  kv,
+		}
+		key := "key_expiry"
+		value := "value expiry"
+		input := []string{"SET", key, value, "PX", "200"}
+		expected := "+OK\r\n"
 
-        mockHandler.Set(input)
+		mockHandler.Set(input)
 
-        received_tpl := kv.data[key]
-        AssertStringEqual(t, received_tpl.value, value)
-        AssertTimeEqual(t, received_tpl.expiry, tm.Add(200 * time.Millisecond))
+		received_tpl := kv.data[key]
+		AssertStringEqual(t, received_tpl.value, value)
+		AssertTimeEqual(t, received_tpl.expiry, tm.Add(200*time.Millisecond))
 
-        received := buffer.String()
+		received := buffer.String()
 
-        AssertStringEqual(t, received, expected)
-    })
+		AssertStringEqual(t, received, expected)
+	})
 
 }
 
 func TestGetValue(t *testing.T) {
 
-    t.Run("Get should return the value for the provided key", func(t *testing.T) {
-        kv := NewInMemoryKV(nil)
-        key := "test_key"
-        value := "test_value"
-        kv.Set(key, value)
-        buffer := &bytes.Buffer{}
-        mockHandler := Handler{
-            writer: bufio.NewWriter(buffer),
-            store: kv,
-        }
-        input := []string{"GET", key}
-        expected := "$10\r\ntest_value\r\n"
+	t.Run("Get should return the value for the provided key", func(t *testing.T) {
+		kv := NewInMemoryKV(nil)
+		key := "test_key"
+		value := "test_value"
+		kv.Set(key, value)
+		buffer := &bytes.Buffer{}
+		mockHandler := Handler{
+			writer: bufio.NewWriter(buffer),
+			store:  kv,
+		}
+		input := []string{"GET", key}
+		expected := "$10\r\ntest_value\r\n"
 
-        mockHandler.Get(input)
+		mockHandler.Get(input)
 
-        received := buffer.String()
+		received := buffer.String()
 
-        AssertStringEqual(t, received, expected)
-    })
+		AssertStringEqual(t, received, expected)
+	})
 
-    t.Run("Get should return null bulk string if key doesn't exist", func(t *testing.T) {
-        kv := NewInMemoryKV(nil)
-        key := "doesnt_exist"
-        buffer := &bytes.Buffer{}
-        mockHandler := Handler{
-            writer: bufio.NewWriter(buffer),
-            store: kv,
-        }
-        input := []string{"GET", key}
-        expected := "$-1\r\n"
+	t.Run("Get should return null bulk string if key doesn't exist", func(t *testing.T) {
+		kv := NewInMemoryKV(nil)
+		key := "doesnt_exist"
+		buffer := &bytes.Buffer{}
+		mockHandler := Handler{
+			writer: bufio.NewWriter(buffer),
+			store:  kv,
+		}
+		input := []string{"GET", key}
+		expected := "$-1\r\n"
 
-        mockHandler.Get(input)
+		mockHandler.Get(input)
 
-        received := buffer.String()
+		received := buffer.String()
 
-        AssertStringEqual(t, received, expected)
-    })
+		AssertStringEqual(t, received, expected)
+	})
 
 }
 
@@ -264,12 +264,12 @@ func TestReadRESPArray(t *testing.T) {
 
 func TestHandler(t *testing.T) {
 
-    server, client := net.Pipe()
-    kv := NewInMemoryKV(&TimeWrapper{})
-    handler := NewHandler(server, kv)
-    clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
+	server, client := net.Pipe()
+	kv := NewInMemoryKV(&TimeWrapper{})
+	handler := NewHandler(server, kv)
+	clientRW := bufio.NewReadWriter(bufio.NewReader(client), bufio.NewWriter(client))
 
-    go handler.HandleConnection()
+	go handler.HandleConnection()
 
 	tests := []struct {
 		description string
@@ -286,60 +286,60 @@ func TestHandler(t *testing.T) {
 			"*2\r\n$4\r\nECHO\r\n$4\r\ntest\r\n",
 			"$4\r\ntest\r\n",
 		},
-        {
-            "SET should reply with OK",
-            "*3\r\n$3\r\nSET\r\n$6\r\ntest_k\r\n$6\r\ntest_v\r\n",
-            "+OK\r\n",
-        },
-        {
-            "GET should reply with correct value for the key",
-            "*2\r\n$3\r\nGET\r\n$6\r\ntest_k\r\n",
-            "$6\r\ntest_v\r\n",
-        },
-        {
-            "GET should reply with null bulk string for non-existing key",
-            "*2\r\n$3\r\nGET\r\n$8\r\nkey_miss\r\n",
-            "$-1\r\n",
-        },
-        {
-            "SET with PX argument should reply with OK",
-            "*5\r\n$3\r\nSET\r\n$5\r\nkey_e\r\n$5\r\nval_e\r\n$2\r\nPX\r\n$3\r\n500\r\n",
-            "+OK\r\n",
-        },
-        {
-            "GET should reply with correct value before expiry",
-            "*2\r\n$3\r\nGET\r\n$5\r\nkey_e\r\n",
-            "$5\r\nval_e\r\n",
-        },
-        {
-            "GET should reply with null bulk string for expired key",
-            "*2\r\n$3\r\nGET\r\n$5\r\nkey_e\r\n",
-            "$-1\r\n",
-        },
+		{
+			"SET should reply with OK",
+			"*3\r\n$3\r\nSET\r\n$6\r\ntest_k\r\n$6\r\ntest_v\r\n",
+			"+OK\r\n",
+		},
+		{
+			"GET should reply with correct value for the key",
+			"*2\r\n$3\r\nGET\r\n$6\r\ntest_k\r\n",
+			"$6\r\ntest_v\r\n",
+		},
+		{
+			"GET should reply with null bulk string for non-existing key",
+			"*2\r\n$3\r\nGET\r\n$8\r\nkey_miss\r\n",
+			"$-1\r\n",
+		},
+		{
+			"SET with PX argument should reply with OK",
+			"*5\r\n$3\r\nSET\r\n$5\r\nkey_e\r\n$5\r\nval_e\r\n$2\r\nPX\r\n$3\r\n500\r\n",
+			"+OK\r\n",
+		},
+		{
+			"GET should reply with correct value before expiry",
+			"*2\r\n$3\r\nGET\r\n$5\r\nkey_e\r\n",
+			"$5\r\nval_e\r\n",
+		},
+		{
+			"GET should reply with null bulk string for expired key",
+			"*2\r\n$3\r\nGET\r\n$5\r\nkey_e\r\n",
+			"$-1\r\n",
+		},
 	}
 
-    RunHandlerTest := func (description, payload, expected string) {
-        t.Run(description, func(t *testing.T) {
-            _, err := clientRW.WriteString(payload)
-            clientRW.Flush()
-            AssertNoError(t, err)
+	RunHandlerTest := func(description, payload, expected string) {
+		t.Run(description, func(t *testing.T) {
+			_, err := clientRW.WriteString(payload)
+			clientRW.Flush()
+			AssertNoError(t, err)
 
-            buffer := make([]byte, len(expected))
-            _, err = clientRW.Read(buffer)
-            AssertNoError(t, err)
+			buffer := make([]byte, len(expected))
+			_, err = clientRW.Read(buffer)
+			AssertNoError(t, err)
 
-            received := string(buffer)
-            AssertStringEqual(t, received, expected)
-        })
-    }
-
-    for _, test := range tests[:7] {
-        RunHandlerTest(test.description, test.payload, test.expected)
+			received := string(buffer)
+			AssertStringEqual(t, received, expected)
+		})
 	}
 
-    time.Sleep(500 * time.Millisecond)
+	for _, test := range tests[:7] {
+		RunHandlerTest(test.description, test.payload, test.expected)
+	}
 
-    RunHandlerTest(tests[7].description, tests[7].payload, tests[7].expected)
+	time.Sleep(500 * time.Millisecond)
+
+	RunHandlerTest(tests[7].description, tests[7].payload, tests[7].expected)
 
 	t.Run("Handler should close the connection once the client closes it", func(t *testing.T) {
 		buffer := make([]byte, 5)

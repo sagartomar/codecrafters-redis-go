@@ -11,8 +11,12 @@ import (
 )
 
 const (
-	PONG             string = "PONG"
+	ECHO             string = "ECHO"
+	GET              string = "GET"
 	OK               string = "OK"
+	PING             string = "PING"
+	PONG             string = "PONG"
+	SET              string = "SET"
 	NULL_BULK_STRING string = "$-1\r\n"
 )
 
@@ -42,13 +46,13 @@ func (h *Handler) HandleConnection() {
 		}
 		if array != nil {
 			switch strings.ToUpper(array[0]) {
-			case "PING":
+			case PING:
 				h.Ping(array)
-			case "ECHO":
+			case ECHO:
 				h.Echo(array)
-			case "SET":
+			case SET:
 				h.Set(array)
-			case "GET":
+			case GET:
 				h.Get(array)
 			}
 		}

@@ -6,11 +6,6 @@ import (
 	"os"
 )
 
-const (
-	PLUS string = "+"
-	CRLF string = "\r\n"
-)
-
 func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
@@ -33,26 +28,4 @@ func main() {
 		handler := NewHandler(conn, kv)
 		go handler.HandleConnection()
 	}
-}
-
-func RemoveCR(input string) string {
-	if input[len(input)-1] == '\r' {
-		return input[0 : len(input)-1]
-	}
-	return input
-}
-
-func RemoveLF(input string) string {
-	if input[len(input)-1] == '\n' {
-		return input[0 : len(input)-1]
-	}
-	return input
-}
-
-func ConvertToRESPSimpleString(message string) string {
-	return PLUS + message + CRLF
-}
-
-func ConvertToRESPBulkString(message string) string {
-	return fmt.Sprintf("$%d\r\n%s\r\n", len(message), message)
 }

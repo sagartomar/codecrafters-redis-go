@@ -13,7 +13,7 @@ import (
 const (
 	PONG             string = "PONG"
 	OK               string = "OK"
-	NULL_BULK_STRING        = "$-1\r\n"
+	NULL_BULK_STRING string = "$-1\r\n"
 )
 
 type Handler struct {
